@@ -1,0 +1,2 @@
+:
+echo "select count(*),domain, client,strftime('%d-%m-%YT%H:%M:%S',datetime(timestamp, 'unixepoch'))  from queries group by domain order by 1 ;" |  sqlite3 /etcpihole/pihole-FTL.db  

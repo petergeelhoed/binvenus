@@ -1,0 +1,15 @@
+#!/bin/bash
+
+a=$(/usr/bin/upnpc -L  | grep "^ i protocol" -A 100 ) 
+b=$(echo "${a}" | grep -v "^ 0 TCP    25->192.168.178.59:25    'libminiupnpc' '' 0$\|GetGenericPortMappingEntry\|^ i protocol")
+
+n=$(echo "${a}" | wc -l)
+if [[ -n "${b}" ||  ${n} -ne 2 ]]
+then
+
+subject='Port pnp';to='petergeelhoed@gmail.com' ; from='venus@petergeelhoed.nl';
+echo -e  "To: ${to}\nReply-To: ${from}\nSubject: ${subject}\n\n\n${a}\n===\n ${mq}"  | /usr/sbin/exim -f $from $to
+
+fi
+
+
