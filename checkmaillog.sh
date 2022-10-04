@@ -1,0 +1,3 @@
+#!/bin/bash
+
+zcat /var/log/exim4/mainl*gz | cat - /var/log/exim4/mainlog.1 /var/log/exim4/mainlog | awk '{if(q==$3){str=str" "$0}else{print str;str=$0;}q=$3}END{print str}' | grep -v "queue"   | sed 's/.*\(SMTP protocol error\|SMTP command timeout\|rejected EHLO\|unexpected disconnection while reading SMTP command\|no host name found\|TLS error on connection\|relay not permitted\|unrecognized command\|SMTP syntax error\).*/\\e[33m\1\\e[0m/' | sed '/rejected RCPT/s/.* <\([^ ]*@petergeelhoed.nl\).*/\\e[31mreject \1\\e[0m/'    | sed  's/.* \(<= [^ ]*\) .* \(=> [^ ]* [^ ]*\).*/\\e[32mOK \1 \2\\e[0m/'  | sort | uniq -c | sort -k1,1g -k2,2  | sed 's/$/\\n/' | echo -e $(</dev/stdin)   
