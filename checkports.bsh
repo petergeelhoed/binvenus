@@ -7,6 +7,8 @@ n=$(echo "${a}" | wc -l)
 if [[ -n "${b}" ||  ${n} -ne 2 ]]
 then
 
+mq=$(/usr/bin/upnpc -r 25 TCP)
+
 subject='Port pnp';to='petergeelhoed@gmail.com' ; from='venus@petergeelhoed.nl';
 echo -e  "To: ${to}\nReply-To: ${from}\nSubject: ${subject}\n\n\n${a}\n===\n ${mq}"  | /usr/sbin/exim -f $from $to
 
