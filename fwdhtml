@@ -1,0 +1,6 @@
+#!/bin/bash 
+if [ -n "$1" ]
+then
+perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' $1 | mail -a "From:$1@petergeelhoed.nl" -s "$( echo -e "forward $1\nContent-Type: text/html")"  petergeelhoed@delta.nl
+
+fi
