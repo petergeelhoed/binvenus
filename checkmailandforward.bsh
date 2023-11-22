@@ -1,14 +1,32 @@
-#!/bin/bash  
-check=$(mail -H 2>&1 )
+#!/bin/bash 
+check=$(/usr/bin/mail -H 2>&1 )
 if [[ ${check} == "No applicable messages" ]] 
 then 
 exit 0
 fi
 
-for i in $(mail -H | grep "^[> ]N" | awk '{print $2}' | tac ); 
+for i in $(/usr/bin/mail -H | grep "^[> ]N" | awk '{print $2}' | tac ); 
 do
- echo p $i  | mail > tmpmail ;
+ [[ -e body ]] &&  rm body
+ [[ -e tmpmail ]] &&  rm tmpmail
+ echo -e "w 1 body\np 1\n" | mail > tmpmail
+
  from=$(sed 's/^From: //p;s/x/_/g' -n tmpmail ); 
- perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "forward ${from}" charon
+ subject=$(sed 's/^Subject: //p;' -n tmpmail ); 
+ btype=$(file body);
+terg=petergeelhoed@delta.nl
+# terg=charon
+ if [[ "${btype}" == "body: ASCII text" ]]
+ then
+ perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "${subject} forward ${from}" $ter
+ elif [[ "${btype}" == "body: HTML"* ]]
+ then
+ echo HMLT 
+ perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "$( echo -e "${subject} forward ${from}\nContent-Type: text/html")" $terg
+
+ else
+
+ perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "${subject} forward ${from}" $terg
+ fi
  rm tmpmail
-done
+ done
