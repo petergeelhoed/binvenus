@@ -1,8 +1,14 @@
-#!/bin/bash 
-for i in $(mail -H | grep "^ N" | awk '{print $2}' | tac ); 
+#!/bin/bash  
+check=$(mail -H 2>&1 )
+if [[ ${check} == "No applicable messages" ]] 
+then 
+exit 0
+fi
+
+for i in $(mail -H | grep "^[> ]N" | awk '{print $2}' | tac ); 
 do
  echo p $i  | mail > tmpmail ;
  from=$(sed 's/^From: //p;s/x/_/g' -n tmpmail ); 
- perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "forward ${from}" petergeelhoed@delta.nl
+ perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "forward ${from}" charon
  rm tmpmail
 done
