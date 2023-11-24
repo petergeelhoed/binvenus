@@ -11,29 +11,30 @@ do
  [[ -e body ]] &&  rm body
  [[ -e tmpmail ]] &&  rm tmpmail
 # echo -e "w $i body\np $i\n" | mail > tmpmail
- echo -e "w $i body\np $i\n" | mail -f mbox > tmpmail
+ echo -e "w $i body\np $i\n"  | mail -f mbox > tmpmail
 
  from=$(sed 's/^From: //p' -n tmpmail ); 
  subject=$(sed 's/^Subject: //p;' -n tmpmail |  tr -c '[A-z 0-9:\n]' '_' ); 
  btype=$(file body);
-# terg=petergeelhoed@delta.nl
-terg=charon
- ctype=$(grep "^Content-Type: multipart" body | wc -l )
- if [[ ctype -gt 0 ]]
+ terg=petergeelhoed@delta.nl
+#terg=charon
+ ctype=$(grep "^Content-Type: multipart" tmpmail | wc -l )
+ if [[ $ctype -gt 0 || $btype -gt 0 ]]
  then
+ echo MULTI 
      /usr/bin/munpack -tq body > list
      html=$(grep -i "text/html" < list | awk '{print $1}')
      text=$(grep -i "text/plain" < list | awk '{print $1}')
      if [[ -n $html ]] 
      then
-     /usr/bin/qprint -e $html | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
+     /usr/bin/qprint -e $html  | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
 
      elif [[ -n $text ]]
      then
-     /usr/bin/qprint -e $text | mail  -s "${subject} forward ${from}" $ter
+     /usr/bin/qprint -e $text  | mail  -s "${subject} forward ${from}" $ter
 
      else
-     echo "Multipart message ${btype}" | mail  -s "${subject} forward ${from}" $terg
+     echo "Multipart message ${btype}"  | mail  -s "${subject} forward ${from}" $terg
      fi
      for file in $(awk '{print $1}' list)
      do 
@@ -42,18 +43,18 @@ terg=charon
      rm list 
 
  else
+ echo ELSE
 
      if [[ "${btype}" == "body: ASCII text" ]]
      then
-     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "${subject} forward ${from}" $terg
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body  | mail  -s "${subject} forward ${from}" $terg
      elif [[ "${btype}" == "body: HTML"* ]]
      then
-     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body  | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
 
      else
 
-     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "${subject} forward ${from}" $terg
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail  | mail  -s "${subject} forward ${from}" $terg
      fi
  fi
- rm tmpmail
  done
