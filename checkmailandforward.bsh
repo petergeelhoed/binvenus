@@ -1,32 +1,59 @@
 #!/bin/bash 
 check=$(/usr/bin/mail -H 2>&1 )
-if [[ ${check} == "No applicable messages" ]] 
-then 
-exit 0
-fi
+#if [[ ${check} == "No applicable messages" ]] 
+#then 
+#exit 0
+#fi
 
-for i in $(/usr/bin/mail -H | grep "^[> ]N" | awk '{print $2}' | tac ); 
+#for i in $(/usr/bin/mail -H | grep "^[> ][N]" | awk '{print $2}' | tac ); 
+for i in 24
 do
  [[ -e body ]] &&  rm body
  [[ -e tmpmail ]] &&  rm tmpmail
- echo -e "w 1 body\np 1\n" | mail > tmpmail
+# echo -e "w $i body\np $i\n" | mail > tmpmail
+ echo -e "w $i body\np $i\n" | mail -f mbox > tmpmail
 
- from=$(sed 's/^From: //p;s/x/_/g' -n tmpmail ); 
- subject=$(sed 's/^Subject: //p;' -n tmpmail ); 
+ from=$(sed 's/^From: //p' -n tmpmail ); 
+ subject=$(sed 's/^Subject: //p;' -n tmpmail |  tr -c '[A-z 0-9:\n]' '_' ); 
  btype=$(file body);
-terg=petergeelhoed@delta.nl
-# terg=charon
- if [[ "${btype}" == "body: ASCII text" ]]
+# terg=petergeelhoed@delta.nl
+terg=charon
+ ctype=$(grep "^Content-Type: multipart" body | wc -l )
+ if [[ ctype -gt 0 ]]
  then
- perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "${subject} forward ${from}" $ter
- elif [[ "${btype}" == "body: HTML"* ]]
- then
- echo HMLT 
- perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "$( echo -e "${subject} forward ${from}\nContent-Type: text/html")" $terg
+     /usr/bin/munpack -tq body > list
+     html=$(grep -i "text/html" < list | awk '{print $1}')
+     text=$(grep -i "text/plain" < list | awk '{print $1}')
+     if [[ -n $html ]] 
+     then
+     /usr/bin/qprint -e $html | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
+
+     elif [[ -n $text ]]
+     then
+     /usr/bin/qprint -e $text | mail  -s "${subject} forward ${from}" $ter
+
+     else
+     echo "Multipart message ${btype}" | mail  -s "${subject} forward ${from}" $terg
+     fi
+     for file in $(awk '{print $1}' list)
+     do 
+     rm $file
+     done
+     rm list 
 
  else
 
- perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "${subject} forward ${from}" $terg
+     if [[ "${btype}" == "body: ASCII text" ]]
+     then
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "${subject} forward ${from}" $terg
+     elif [[ "${btype}" == "body: HTML"* ]]
+     then
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < body | mail  -s "$( echo -e "'${subject} forward ${from}'\nContent-Type: text/html")" $terg
+
+     else
+
+     perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' < tmpmail | mail  -s "${subject} forward ${from}" $terg
+     fi
  fi
  rm tmpmail
  done
