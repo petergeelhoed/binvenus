@@ -12,7 +12,7 @@ for i in $(/usr/bin/mail -H | grep "^[> ][N]" | awk '{print $2}' | tac );
 do
  [[ -e body ]] &&  rm body
  [[ -e tmpmail ]] &&  rm tmpmail
- echo -e "w $i body\ns $i tmpmail \n p $1\n" | mail 
+ echo -e "w $i body\ns $i tmpmail \n p $1\n" | mail > /dev/null
 # echo -e "w $i body\ns $i tmpmail \n"  | mail -f mbox 
 
  from=$(sed 's/^From: //p' -n tmpmail | head -n 1 ); 

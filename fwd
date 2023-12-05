@@ -1,6 +1,37 @@
-#!/bin/bash 
-if [ -n "$1" ]
-then
-perl -MMIME::QuotedPrint -pe '$_=MIME::QuotedPrint::decode($_);' $1 | mail -a "From:$1@petergeelhoed.nl" -s "forward $1"  petergeelhoed@delta.nl
+#!/bin/bash
 
-fi
+#box=/usr/bin/mail
+#box=/home/peter/mbox
+i=$1
+[[ $i -gt 0 && $i -lt 10000 ]] || exit
+ [[ -e tmpmail ]] && rm tmpmail
+ [[ -e body ]] && rm body
+ echo -e "w $i body\ns $i tmpmail \n p $i\n"  | /usr/bin/mail  > /dev/null
+ [[ -e tmpmail ]] || exit 
+ [[ -e body ]] || exit 
+ [[ -e header ]] && rm header
+
+ # do not forward this
+ [[ $(formail -X 'From:' <  tmpmail | grep "From: Mail Delivery System" | wc -l) -gt 0 ]] && exit
+ [[ $(formail -X 'Subject'< tmpmail | grep "Subject: Report domain:" | wc -l) -gt 0 ]] && exit
+
+ formail -X 'From:' < tmpmail | sed 's/From: //;s/ <[^ ]*>//;s/<\|>//g;s/@/ /;s/^/From: /;s/$/ <peter@petergeelhoed.nl>/' > header
+ formail -X 'Subject'< tmpmail  | tr -c '[A-z 0-9:\n]' '_' | head -n 1 >> header
+ formail -X 'Content-Type'< tmpmail >> header
+ formail -X 'Content-Disposition' < tmpmail >> header
+ formail -X 'Content-Transfer-Encoding'< tmpmail >> header
+
+
+
+ b64=$(echo "$header" | grep "Content-Transfer-Encoding: base64" | wc -l)
+ if [[ "${b64}" -gt 0 ]]
+ then
+ base64 < body |  mail -a "$(cat header)" -s "$subject" petergeelhoed@delta.nl 
+ else
+
+#cat body |  mail -a "${header}" -s "forward" petergeelhoed@delta.nl 
+#echo   mail -a "$(cat header)" -s "$subject" petergeelhoed@delta.nl 
+cat body |  mail -a "$(cat header)"  petergeelhoed@delta.nl 
+# cat body |  mail -a "$(cat header)" charon
+ cat header
+ fi
